@@ -1,4 +1,4 @@
-package zeroxlab.org.imgorg;
+package org.zeroxlab.imgorg;
 
 import android.support.v7.app.AppCompatActivity;
 import android.app.Activity;

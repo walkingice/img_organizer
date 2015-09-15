@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">ImgOrg</string>
+    <string name="app_name">Img Organizer</string>
 
-    <string name="title_section1">Section 1</string>
+    <string name="title_section1">Main</string>
     <string name="title_section2">Section 2</string>
-    <string name="title_section3">Section 3</string>
+    <string name="title_section3">About</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -11,4 +11,10 @@
     <string name="action_example">Example action</string>
 
     <string name="action_settings">Settings</string>
+
+    <string name="about_desc">https://github.com/walkingice/img_organizer</string>
+
+    <string name="key_from_dir">pref_key_from_dir</string>
+    <string name="key_to_dir">pref_key_to_dir</string>
 </resources>
+
