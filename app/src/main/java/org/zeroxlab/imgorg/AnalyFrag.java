@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AnalyFrag extends Fragment implements View.OnClickListener {
@@ -48,12 +49,6 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     public void onCreate(Bundle state) {
         super.onCreate(state);
         mRes = getResources();
-        mOpMaps = new ArrayList<>();
-        mAdapter = new SimpleAdapter(getActivity(),
-                mOpMaps,
-                android.R.layout.simple_list_item_2,
-                new String[]{KEY_PATH_FROM, KEY_PATH_TO},
-                new int[]{android.R.id.text1, android.R.id.text2});
     }
 
     @Override
@@ -109,12 +104,12 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         mDirTo = new File(to);
     }
 
-    private void appendOperation(Organizer.Operation op) {
+    private void appendOperation(List<Map<String, Object>> list, Organizer.Operation op) {
         Map<String, Object> map = new HashMap<>();
         map.put(KEY_OPERATION, op);
         map.put(KEY_PATH_FROM, op.getPathFrom());
         map.put(KEY_PATH_TO, op.getPathTo());
-        mOpMaps.add(map);
+        list.add(map);
     }
 
     private void createOptions() {
@@ -125,19 +120,18 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.show();
         AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object>() {
             File[] medias;
-            StringBuffer sb = new StringBuffer();
 
             @Override
             protected Object doInBackground(Object... params) {
                 int count = 0;
+                mOpMaps = new ArrayList<>();
                 for (final File media : medias) {
                     Organizer.Operation op = Organizer.createOp(media, mDirTo, "");
-                    appendOperation(op);
+                    appendOperation(mOpMaps, op);
                     count++;
                     publishProgress(new Integer(count));
                 }
-
-                return null;
+                return mOpMaps;
             }
 
             @Override
@@ -157,7 +151,13 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
             }
 
             @Override
-            protected void onPostExecute(Object result) {
+            protected void onPostExecute(Object list) {
+                mAdapter = new SimpleAdapter(getActivity(),
+                        mOpMaps,
+                        android.R.layout.simple_list_item_2,
+                        new String[]{KEY_PATH_FROM, KEY_PATH_TO},
+                        new int[]{android.R.id.text1, android.R.id.text2});
+                mResults.setAdapter(mAdapter);
                 mAdapter.notifyDataSetChanged();
                 dialog.cancel();
                 Log.d(ImgOrg.TAG, "Done");
@@ -180,6 +180,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
             protected Object doInBackground(Object... params) {
                 int count = 0;
                 while (!this.isCancelled() && !mOpMaps.isEmpty()) {
+                    // FIXME: should remove items from mOpMaps in main thread
                     Map<String, Object> map = mOpMaps.remove(0);
                     Operation op = (Operation) map.get(KEY_OPERATION);
                     op.consume();
