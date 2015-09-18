@@ -1,54 +1,56 @@
 // vim: et sw=4 sts=4 tabstop=4
 package org.zeroxlab.imgorg;
 
-import org.zeroxlab.imgorg.R;
-import org.zeroxlab.imgorg.ImgOrg;
+import android.app.Fragment;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.preference.PreferenceManager;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+
 import org.zeroxlab.imgorg.lib.Organizer;
 import org.zeroxlab.imgorg.lib.Organizer.Operation;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.app.Fragment;
-import android.app.FragmentManager;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.res.Resources;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.os.IBinder;
-import android.os.Environment;
-import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AnalyFrag extends Fragment implements View.OnClickListener {
 
     private Resources mRes;
 
-    private TextView mResults;
+    private ListView mResults;
     private Button mOrganize;
-    private ArrayList<Organizer.Operation> mOps;
+    private ArrayList<Map<String, Object>> mOpMaps;
+    private BaseAdapter mAdapter;
 
     private File mDirFrom;
     private File mDirTo;
+
+    private final static String KEY_OPERATION = "get_organizer_operation";
 
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
         mRes = getResources();
-        mOps = new ArrayList<Organizer.Operation>();
+        mOpMaps = new ArrayList<>();
+        mAdapter = new SimpleAdapter(getActivity(),
+                mOpMaps,
+                android.R.layout.simple_list_item_1,
+                new String[]{KEY_OPERATION},
+                new int[]{android.R.id.text1});
     }
 
     @Override
@@ -60,9 +62,9 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     public void onStart() {
         super.onStart();
         View root = getView();
-        mResults = (TextView) root.findViewById(R.id.analy_results);
-        mResults.setText("Calculating");
-        mOrganize = (Button)root.findViewById(R.id.btn_organize);
+        mResults = (ListView) root.findViewById(R.id.analy_results);
+        mResults.setAdapter(mAdapter);
+        mOrganize = (Button) root.findViewById(R.id.btn_organize);
         mOrganize.setOnClickListener(this);
     }
 
@@ -96,9 +98,15 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         String keyFrom = mRes.getString(R.string.key_from_dir);
         String keyTo = mRes.getString(R.string.key_to_dir);
         String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
-        String to   = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
+        String to = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
         mDirFrom = new File(from);
-        mDirTo   = new File(to);
+        mDirTo = new File(to);
+    }
+
+    private void appendOperation(Organizer.Operation op) {
+        Map<String, Object> map = new HashMap<>();
+        map.put(KEY_OPERATION, op);
+        mOpMaps.add(map);
     }
 
     private void createOptions() {
@@ -107,23 +115,16 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setCancelable(false);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
-        AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object> () {
+        AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object>() {
             File[] medias;
             StringBuffer sb = new StringBuffer();
 
             @Override
             protected Object doInBackground(Object... params) {
                 int count = 0;
-
-                for (final File media: medias) {
+                for (final File media : medias) {
                     Organizer.Operation op = Organizer.createOp(media, mDirTo, "");
-                    if (op.isPending()) {
-                        // do not append too much string
-                        if (count <= 30) {
-                            sb.append(op.toString() + "\n");
-                        }
-                        mOps.add(op);
-                    }
+                    appendOperation(op);
                     count++;
                     publishProgress(new Integer(count));
                 }
@@ -149,7 +150,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
             @Override
             protected void onPostExecute(Object result) {
-                mResults.setText(sb.toString());
+                mAdapter.notifyDataSetChanged();
                 dialog.cancel();
                 Log.d(ImgOrg.TAG, "Done");
             }
@@ -159,20 +160,20 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     }
 
     private void consumeOperations() {
-        if (mOps.size() == 0) {
+        if (mOpMaps.size() == 0) {
             return;
         }
 
         final ProgressDialog dialog = new ProgressDialog(this.getActivity());
 
-        final AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object> () {
+        final AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object>() {
 
             @Override
             protected Object doInBackground(Object... params) {
                 int count = 0;
-                ArrayList<Operation> ops = new ArrayList<Operation>();
-                while (!this.isCancelled() && !mOps.isEmpty()) {
-                    Operation op = mOps.remove(0);
+                while (!this.isCancelled() && !mOpMaps.isEmpty()) {
+                    Map<String, Object> map = mOpMaps.remove(0);
+                    Operation op = (Operation) map.get(KEY_OPERATION);
                     op.consume();
                     count++;
                     publishProgress(new Integer(count));
@@ -182,7 +183,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
             @Override
             protected void onPreExecute() {
-                dialog.setMax(mOps.size());
+                dialog.setMax(mOpMaps.size());
             }
 
             @Override
@@ -200,7 +201,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setCancelable(true);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            public void onCancel(DialogInterface dialog){
+            public void onCancel(DialogInterface dialog) {
                 task.cancel(true);
             }
         });
