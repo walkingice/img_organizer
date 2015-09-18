@@ -40,6 +40,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private File mDirTo;
 
     private final static String KEY_OPERATION = "get_organizer_operation";
+    private final static String KEY_PATH_FROM = "get_path_from";
+    private final static String KEY_PATH_TO = "get_path_to";
 
     @Override
     public void onCreate(Bundle state) {
@@ -48,9 +50,9 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         mOpMaps = new ArrayList<>();
         mAdapter = new SimpleAdapter(getActivity(),
                 mOpMaps,
-                android.R.layout.simple_list_item_1,
-                new String[]{KEY_OPERATION},
-                new int[]{android.R.id.text1});
+                android.R.layout.simple_list_item_2,
+                new String[]{KEY_PATH_FROM, KEY_PATH_TO},
+                new int[]{android.R.id.text1, android.R.id.text2});
     }
 
     @Override
@@ -106,6 +108,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private void appendOperation(Organizer.Operation op) {
         Map<String, Object> map = new HashMap<>();
         map.put(KEY_OPERATION, op);
+        map.put(KEY_PATH_FROM, op.getPathFrom());
+        map.put(KEY_PATH_TO, op.getPathTo());
         mOpMaps.add(map);
     }
 

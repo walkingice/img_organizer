@@ -68,8 +68,12 @@ public final class Organizer {
         private File mTo;
         private String mContainerPath;
 
+        private String mPathFrom = "";
+        private String mPathTo = "";
+
         public Operation (File fromFile, File destDir) {
                 mFrom = fromFile;
+                mPathFrom = mFrom.getAbsolutePath();
                 mContainerPath = destDir.getAbsolutePath();
                 mIsImg = true;
                 probe();
@@ -102,6 +106,7 @@ public final class Organizer {
             try {
                 String time = AndroidExif.getDate(mFrom, sSDF);
                 mTo = new File(String.format("%s/%s/%s", mContainerPath, time, mFrom.getName()));
+                mPathTo = mTo.getAbsolutePath();
                 mPending = !mTo.exists();
             } catch (IOException e) {
                 mPending = false;
@@ -118,6 +123,14 @@ public final class Organizer {
                 sb.append(" to: " + mTo.getPath());
             }
             return sb.toString();
+        }
+
+        public String getPathFrom() {
+            return mPathFrom;
+        }
+
+        public String getPathTo() {
+            return mPathTo;
         }
     }
 }
