@@ -55,13 +55,10 @@ public class MainActivity extends AppCompatActivity
         int number = bundle.getInt(PlaceholderFragment.ARG_SECTION_NUMBER, 0);
         switch (number) {
             case 0:
-                mTitle = getString(R.string.title_section1);
+                mTitle = getString(R.string.title_section0);
                 break;
             case 1:
-                mTitle = getString(R.string.title_section2);
-                break;
-            case 2:
-                mTitle = getString(R.string.title_section3);
+                mTitle = getString(R.string.title_section1);
                 break;
         }
     }
