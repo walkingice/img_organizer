@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.zeroxlab.imgorg">
+<manifest package="org.zeroxlab.imgorg"
+          xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"></uses-permission>
 
@@ -20,6 +20,8 @@
         </activity>
 
         <activity android:name="AnalyActivity"
+            />
+        <activity android:name="SettingsActivity"
             />
     </application>
 

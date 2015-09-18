@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+	<PreferenceCategory
+		android:title="Directories Settings"
+		>
+		<EditTextPreference
+			android:key="@string/key_from_dir"
+			android:title="From the directory"
+			android:summary="Pictures under this directory will be organized"
+			/>
+		<EditTextPreference
+			android:key="@string/key_to_dir"
+			android:title="To the directory"
+			android:summary="Organized pictures will be placed here"
+			/>
+	</PreferenceCategory>
+</PreferenceScreen>
