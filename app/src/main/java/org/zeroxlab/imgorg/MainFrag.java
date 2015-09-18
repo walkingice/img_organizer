@@ -2,6 +2,7 @@
 package org.zeroxlab.imgorg;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -60,8 +61,8 @@ public class MainFrag extends Fragment implements View.OnClickListener{
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.main_btn_analy) {
-            //Intent i = new Intent(mCtx, AnalyActivity.class);
-            //startActivity(i);
+            Intent i = new Intent(mCtx, AnalyActivity.class);
+            startActivity(i);
         }
     }
 
