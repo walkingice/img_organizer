@@ -124,14 +124,15 @@ public class MainActivity extends AppCompatActivity
             return fragment;
         }
 
-        public PlaceholderFragment() {
-        }
-
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            return rootView;
+            int num = getArguments().getInt(ARG_SECTION_NUMBER, 0);
+            if (num == 1) {
+                return inflater.inflate(R.layout.fragment_about, container, false);
+            } else {
+                return inflater.inflate(R.layout.fragment_main, container, false);
+            }
         }
     }
 
