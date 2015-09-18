@@ -74,8 +74,10 @@ public class MainFrag extends Fragment implements View.OnClickListener{
 
     private void initPreferences() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String keyMax = mRes.getString(R.string.key_maximum);
         String keyFrom = mRes.getString(R.string.key_from_dir);
         String keyTo = mRes.getString(R.string.key_to_dir);
+        int max = prefs.getInt(keyMax, ImgOrg.DEF_MAX);
         String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
         String to   = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
 
@@ -83,6 +85,7 @@ public class MainFrag extends Fragment implements View.OnClickListener{
         mToDir.setText(to);
 
         SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(keyMax, max);
         editor.putString(keyFrom, from);
         editor.putString(keyTo, to);
         editor.commit();

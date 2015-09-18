@@ -13,6 +13,7 @@
 
     <string name="about_desc">https://github.com/walkingice/img_organizer</string>
 
+    <string name="key_maximum">pref_key_maximum</string>
     <string name="key_from_dir">pref_key_from_dir</string>
     <string name="key_to_dir">pref_key_to_dir</string>
 </resources>

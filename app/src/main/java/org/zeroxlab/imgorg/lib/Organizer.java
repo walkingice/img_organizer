@@ -42,9 +42,17 @@ public final class Organizer {
         }
     }
 
-    public final static File[] findMedias(File dir) throws IOException {
+    public final static File[] findMedias(File dir, int maximum) throws IOException {
         ensureDir(dir);
-        return dir.listFiles(FILTER);
+        File[] found = dir.listFiles(FILTER);
+        if (found != null && found.length > maximum) {
+            File[] trim = new File[maximum];
+            for (int i = 0; i < maximum; i++) {
+                trim[i] = found[i];
+            }
+            found = trim;
+        }
+        return found;
     }
 
     public final static Operation createOp (File file, File toDir, String prefix) {

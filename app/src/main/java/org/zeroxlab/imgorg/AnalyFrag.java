@@ -36,6 +36,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private ArrayList<Map<String, Object>> mOpMaps;
     private BaseAdapter mAdapter;
 
+    private int mMax = ImgOrg.DEF_MAX;
     private File mDirFrom;
     private File mDirTo;
 
@@ -97,8 +98,11 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
     private void readPreferences() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String keyMax = mRes.getString(R.string.key_maximum);
         String keyFrom = mRes.getString(R.string.key_from_dir);
         String keyTo = mRes.getString(R.string.key_to_dir);
+
+        mMax = prefs.getInt(keyMax, mMax);
         String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
         String to = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
         mDirFrom = new File(from);
@@ -139,7 +143,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
             @Override
             protected void onPreExecute() {
                 try {
-                    medias = Organizer.findMedias(mDirFrom);
+                    medias = Organizer.findMedias(mDirFrom, mMax);
                 } catch (IOException e) {
                     Log.e(ImgOrg.TAG, e.toString());
                     medias = new File[0];
