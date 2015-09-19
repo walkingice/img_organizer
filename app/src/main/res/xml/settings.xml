@@ -20,5 +20,11 @@
             android:summary="Maximum number of files to deal with"
             android:title="Maximum number of files to deal with"
             />
+        <CheckBoxPreference
+            android:enabled="false"
+            android:key="@string/key_handle_video"
+            android:summary="Whether to handle mp4 files"
+            android:title="Handle video files"
+            />
     </PreferenceCategory>
 </PreferenceScreen>

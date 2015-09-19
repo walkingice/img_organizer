@@ -38,6 +38,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private BaseAdapter mAdapter;
 
     private int mMax = Integer.parseInt(ImgOrg.DEF_MAX);
+    private boolean mHandleVideo = ImgOrg.DEF_HANDLE_VIDEO;
     private File mDirFrom;
     private File mDirTo;
 
@@ -94,10 +95,12 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private void readPreferences() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String keyMax = mRes.getString(R.string.key_maximum);
+        String keyHandleVideo = mRes.getString(R.string.key_handle_video);
         String keyFrom = mRes.getString(R.string.key_from_dir);
         String keyTo = mRes.getString(R.string.key_to_dir);
 
         mMax = Integer.parseInt(prefs.getString(keyMax, mMax + ""));
+        mHandleVideo = prefs.getBoolean(keyHandleVideo, ImgOrg.DEF_HANDLE_VIDEO);
         String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
         String to = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
         mDirFrom = new File(from);
@@ -137,7 +140,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
             @Override
             protected void onPreExecute() {
                 try {
-                    medias = Organizer.findMedias(mDirFrom, mMax);
+                    medias = Organizer.findMedias(mDirFrom, mMax, mHandleVideo);
                 } catch (IOException e) {
                     Log.e(ImgOrg.TAG, e.toString());
                     medias = new File[0];

@@ -13,10 +13,26 @@ public final class Organizer {
         "gif", "png", "bmp", "jpg", "jpeg", "mp4"
     };
 
+    private final static String[] EXTS_NO_VID = new String[] {
+        "gif", "png", "bmp", "jpg", "jpeg"
+    };
+
     private final static FilenameFilter FILTER = new FilenameFilter() {
         @Override
         public boolean accept(final File dir, final String name) {
             for (final String ext : EXTS) {
+                if (name.toLowerCase().endsWith("." + ext)) {
+                    return (true);
+                }
+            }
+            return (false);
+        }
+    };
+
+    private final static FilenameFilter FILTER_NO_VID = new FilenameFilter() {
+        @Override
+        public boolean accept(final File dir, final String name) {
+            for (final String ext : EXTS_NO_VID) {
                 if (name.toLowerCase().endsWith("." + ext)) {
                     return (true);
                 }
@@ -42,9 +58,10 @@ public final class Organizer {
         }
     }
 
-    public final static File[] findMedias(File dir, int maximum) throws IOException {
+    public final static File[] findMedias(File dir, int maximum, boolean video) throws IOException {
         ensureDir(dir);
-        File[] found = dir.listFiles(FILTER);
+        // FIXME: currently, always ignore mp4 video files since I do not want to get EXIF from it
+        File[] found = video ? dir.listFiles(FILTER) : dir.listFiles(FILTER_NO_VID);
         if (found != null && found.length > maximum) {
             File[] trim = new File[maximum];
             for (int i = 0; i < maximum; i++) {
