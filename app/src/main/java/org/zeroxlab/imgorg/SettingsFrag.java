@@ -57,8 +57,8 @@ public class SettingsFrag extends PreferenceFragment implements OnSharedPreferen
         final Intent chooserIntent = new Intent(mCtx, DirectoryChooserActivity.class);
         final DirectoryChooserConfig config = DirectoryChooserConfig.builder()
                 .allowReadOnlyDirectory(true)
-                .newDirectoryName("new_dir")
-                .allowNewDirectoryNameModification(false)
+                .newDirectoryName("Organized")
+                .allowNewDirectoryNameModification(true)
                 .initialDirectory(path)
                 .build();
 
