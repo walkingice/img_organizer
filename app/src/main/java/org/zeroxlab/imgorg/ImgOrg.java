@@ -13,7 +13,7 @@ public final class ImgOrg {
                     Environment.DIRECTORY_DCIM);
 
     // how many files could be processed at one time
-    public final static int DEF_MAX = 500;
+    public final static String DEF_MAX = "500";
     public final static File DEF_FROM = new File(DEF_DIR.getPath() + "/Camera");
     public final static File DEF_TO = new File(DEF_DIR.getPath() + "/Organized");
 }

@@ -1,0 +1,10 @@
+<resources>
+	<string-array name="maximum_numbers">
+		<item>10</item>
+		<item>50</item>
+		<item>100</item>
+		<item>500</item>
+		<item>1000</item>
+		<item>2000</item>
+	</string-array>
+</resources>

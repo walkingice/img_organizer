@@ -13,5 +13,12 @@
             android:summary="Organized pictures will be placed here"
             android:title="To the directory"
             />
+        <ListPreference
+            android:entries="@array/maximum_numbers"
+            android:entryValues="@array/maximum_numbers"
+            android:key="@string/key_maximum"
+            android:summary="Maximum number of files to deal with"
+            android:title="Maximum number of files to deal with"
+            />
     </PreferenceCategory>
 </PreferenceScreen>

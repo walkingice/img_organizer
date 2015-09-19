@@ -123,8 +123,10 @@ public class SettingsFrag extends PreferenceFragment implements OnSharedPreferen
     private void resetSummaries() {
         String keyFrom = getString(R.string.key_from_dir);
         String keyTo = getString(R.string.key_to_dir);
+        String keyMax = getString(R.string.key_maximum);
         findPreference(keyFrom).setSummary(getStrValue(keyFrom));
         findPreference(keyTo).setSummary(getStrValue(keyTo));
+        findPreference(keyMax).setSummary(getStrValue(keyMax));
     }
 
     @Override
