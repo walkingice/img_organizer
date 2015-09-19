@@ -3,12 +3,12 @@
     <PreferenceCategory
         android:title="Directories Settings"
         >
-        <EditTextPreference
+        <Preference
             android:key="@string/key_from_dir"
             android:summary="Pictures under this directory will be organized"
             android:title="From the directory"
             />
-        <EditTextPreference
+        <Preference
             android:key="@string/key_to_dir"
             android:summary="Organized pictures will be placed here"
             android:title="To the directory"
