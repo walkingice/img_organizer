@@ -277,9 +277,12 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         List<String> paths = new ArrayList<>(maps.size());
         for (Iterator<Map<String, Object>> it = maps.iterator(); it.hasNext(); ) {
             Map<String, Object> map = it.next();
-            paths.add((String) map.get(key));
+            Operation op = (Operation)map.get(KEY_OPERATION);
+            if (op.isMoved()) {
+                paths.add((String) map.get(key));
+            }
         }
-        String[] array = new String[maps.size()];
+        String[] array = new String[paths.size()];
         paths.toArray(array);
         return array;
     }

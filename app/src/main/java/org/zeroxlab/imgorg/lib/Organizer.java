@@ -88,6 +88,7 @@ public final class Organizer {
         private boolean mIsDup; // dest == from ? we use 'copy' but not 'move', so it might happens
 
         private boolean mPending;
+        private boolean mMoved = false;
 
         private File mFrom;
         private File mTo;
@@ -104,8 +105,13 @@ public final class Organizer {
                 probe();
         }
 
+        // true, if this file should be moved
         public boolean isPending() {
             return mPending;
+        }
+
+        public boolean isMoved() {
+            return mMoved;
         }
 
         public void consume() {
@@ -122,6 +128,7 @@ public final class Organizer {
             }
 
             mFrom.renameTo(mTo);
+            mMoved = true;
         }
 
         private boolean probe() {
