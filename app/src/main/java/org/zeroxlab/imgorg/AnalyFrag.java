@@ -247,29 +247,32 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
 
-        String[] toRemovePaths = getStringPaths(mRemoved, KEY_PATH_FROM);
         String[] toScanPaths = getStringPaths(mRemoved, KEY_PATH_TO);
 
         // scan destination path to DB
         MediaScannerConnection.scanFile(this.getActivity(), toScanPaths, null, null);
 
+        /* FIXME: the below code which be comment out, it breaks my sdcard storage and
+         * my system format my sdcar
+         */
         // remove source path from DB
-        try {
-            ContentResolver resolver = this.getActivity().getContentResolver();
-            ArrayList<ContentProviderOperation> options = new ArrayList<>(toRemovePaths.length);
-            for (int i = 0; i < toRemovePaths.length; i++) {
-                ContentProviderOperation op =
-                        ContentProviderOperation.newDelete(
-                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-                                .withSelection(MediaStore.Images.Media.DATA + "=?",
-                                        new String[]{toRemovePaths[i]})
-                                .build();
-                options.add(op);
-            }
-            resolver.applyBatch(MediaStore.AUTHORITY, options);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        //String[] toRemovePaths = getStringPaths(mRemoved, KEY_PATH_FROM);
+        //try {
+        //    ContentResolver resolver = this.getActivity().getContentResolver();
+        //    ArrayList<ContentProviderOperation> options = new ArrayList<>(toRemovePaths.length);
+        //    for (int i = 0; i < toRemovePaths.length; i++) {
+        //        ContentProviderOperation op =
+        //                ContentProviderOperation.newDelete(
+        //                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        //                        .withSelection(MediaStore.Images.Media.DATA + "=?",
+        //                                new String[]{toRemovePaths[i]})
+        //                        .build();
+        //        options.add(op);
+        //    }
+        //    resolver.applyBatch(MediaStore.AUTHORITY, options);
+        //} catch (Exception e) {
+        //    e.printStackTrace();
+        //}
         // update ListView
         for (Iterator<Map<String, Object>> i = mRemoved.iterator(); i.hasNext(); ) {
             mPending.remove(i.next());
@@ -283,7 +286,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         List<String> paths = new ArrayList<>(maps.size());
         for (Iterator<Map<String, Object>> it = maps.iterator(); it.hasNext(); ) {
             Map<String, Object> map = it.next();
-            Operation op = (Operation)map.get(KEY_OPERATION);
+            Operation op = (Operation) map.get(KEY_OPERATION);
             if (op.isMoved()) {
                 paths.add((String) map.get(key));
             }
