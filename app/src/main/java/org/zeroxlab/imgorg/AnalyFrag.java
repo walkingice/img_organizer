@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,7 +36,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
     private ListView mResults;
     private Button mOrganize;
-    private ArrayList<Map<String, Object>> mOpMaps;
+    private List<Map<String, Object>> mPending;
+    private List<Map<String, Object>> mRemoved;
     private BaseAdapter mAdapter;
 
     private int mMax = Integer.parseInt(ImgOrg.DEF_MAX);
@@ -60,6 +63,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     @Override
     public void onStart() {
         super.onStart();
+        mPending = new LinkedList<>();
+        mRemoved = new ArrayList<>();
         View root = getView();
         mResults = (ListView) root.findViewById(R.id.analy_results);
         mResults.setAdapter(mAdapter);
@@ -127,14 +132,13 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
             @Override
             protected Object doInBackground(Object... params) {
                 int count = 0;
-                mOpMaps = new ArrayList<>();
                 for (final File media : medias) {
                     Organizer.Operation op = Organizer.createOp(media, mDirTo, "");
-                    appendOperation(mOpMaps, op);
+                    appendOperation(mPending, op);
                     count++;
                     publishProgress(new Integer(count));
                 }
-                return mOpMaps;
+                return mPending;
             }
 
             @Override
@@ -156,7 +160,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
             @Override
             protected void onPostExecute(Object list) {
                 mAdapter = new SimpleAdapter(getActivity(),
-                        mOpMaps,
+                        mPending,
                         android.R.layout.simple_list_item_2,
                         new String[]{KEY_PATH_FROM, KEY_PATH_TO},
                         new int[]{android.R.id.text1, android.R.id.text2});
@@ -171,43 +175,55 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     }
 
     private void consumeOperations() {
-        if (mOpMaps.size() == 0) {
+        if (mPending.size() == 0) {
             return;
         }
 
         final ProgressDialog dialog = new ProgressDialog(this.getActivity());
 
-        final AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object>() {
+        final AsyncTask<Object, Map<String, Object>, Object> task =
+                new AsyncTask<Object, Map<String, Object>, Object>() {
+                    @Override
+                    protected Object doInBackground(Object... params) {
+                        for (Iterator<Map<String, Object>> i = mPending.iterator(); i.hasNext(); ) {
+                            Map<String, Object> map = i.next();
+                            Operation op = (Operation) map.get(KEY_OPERATION);
+                            op.consume();
+                            publishProgress(map);
+                        }
+                        return null;
+                    }
 
-            @Override
-            protected Object doInBackground(Object... params) {
-                int count = 0;
-                while (!this.isCancelled() && !mOpMaps.isEmpty()) {
-                    // FIXME: should remove items from mOpMaps in main thread
-                    Map<String, Object> map = mOpMaps.remove(0);
-                    Operation op = (Operation) map.get(KEY_OPERATION);
-                    op.consume();
-                    count++;
-                    publishProgress(new Integer(count));
-                }
-                return null;
-            }
+                    @Override
+                    protected void onPreExecute() {
+                        dialog.setMax(mPending.size());
+                    }
 
-            @Override
-            protected void onPreExecute() {
-                dialog.setMax(mOpMaps.size());
-            }
+                    @Override
+                    protected void onProgressUpdate(Map<String, Object>... progress) {
+                        mRemoved.add(progress[0]);
+                        dialog.setProgress(mRemoved.size());
+                    }
 
-            @Override
-            protected void onProgressUpdate(Integer... progress) {
-                dialog.setProgress(progress[0]);
-            }
+                    @Override
+                    protected void onPostExecute(Object result) {
+                        clean();
+                        dialog.cancel();
+                    }
 
-            @Override
-            protected void onPostExecute(Object result) {
-                dialog.cancel();
-            }
-        };
+                    @Override
+                    protected void onCancelled(Object result) {
+                        clean();
+                    }
+
+                    private void clean() {
+                        for (Iterator<Map<String, Object>> i = mRemoved.iterator(); i.hasNext(); ) {
+                            mPending.remove(i.next());
+                        }
+                        mRemoved.clear();
+                        mAdapter.notifyDataSetChanged();
+                    }
+                };
 
         dialog.setMessage("Moving...");
         dialog.setCancelable(true);
