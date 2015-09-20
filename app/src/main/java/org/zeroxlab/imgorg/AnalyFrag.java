@@ -194,6 +194,12 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                             Operation op = (Operation) map.get(KEY_OPERATION);
                             op.consume();
                             publishProgress(map);
+                            //XXX: just for testing
+                            try {
+                                Thread.sleep(300);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
                         }
                         return null;
                     }
