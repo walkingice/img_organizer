@@ -3,12 +3,16 @@ package org.zeroxlab.imgorg;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.ContentProviderOperation;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.media.MediaScannerConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -207,22 +211,15 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
                     @Override
                     protected void onPostExecute(Object result) {
-                        clean();
                         dialog.cancel();
+                        onUpdateOperations();
                     }
 
                     @Override
                     protected void onCancelled(Object result) {
-                        clean();
+                        onUpdateOperations();
                     }
 
-                    private void clean() {
-                        for (Iterator<Map<String, Object>> i = mRemoved.iterator(); i.hasNext(); ) {
-                            mPending.remove(i.next());
-                        }
-                        mRemoved.clear();
-                        mAdapter.notifyDataSetChanged();
-                    }
                 };
 
         dialog.setMessage("Moving...");
@@ -237,4 +234,53 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         task.execute();
     }
 
+    private void onUpdateOperations() {
+        final ProgressDialog dialog = new ProgressDialog(this.getActivity());
+        dialog.setMessage("Updating...");
+        dialog.setCancelable(false);
+        dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        dialog.show();
+
+        String[] toRemovePaths = getStringPaths(mRemoved, KEY_PATH_FROM);
+        String[] toScanPaths = getStringPaths(mRemoved, KEY_PATH_TO);
+
+        // scan destination path to DB
+        MediaScannerConnection.scanFile(this.getActivity(), toScanPaths, null, null);
+
+        // remove source path from DB
+        try {
+            ContentResolver resolver = this.getActivity().getContentResolver();
+            ArrayList<ContentProviderOperation> options = new ArrayList<>(toRemovePaths.length);
+            for (int i = 0; i < toRemovePaths.length; i++) {
+                ContentProviderOperation op =
+                        ContentProviderOperation.newDelete(
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                                .withSelection(MediaStore.Images.Media.DATA + "=?",
+                                        new String[]{toRemovePaths[i]})
+                                .build();
+                options.add(op);
+            }
+            resolver.applyBatch(MediaStore.AUTHORITY, options);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // update ListView
+        for (Iterator<Map<String, Object>> i = mRemoved.iterator(); i.hasNext(); ) {
+            mPending.remove(i.next());
+        }
+        mRemoved.clear();
+        mAdapter.notifyDataSetChanged();
+        dialog.cancel();
+    }
+
+    private String[] getStringPaths(List<Map<String, Object>> maps, String key) {
+        List<String> paths = new ArrayList<>(maps.size());
+        for (Iterator<Map<String, Object>> it = maps.iterator(); it.hasNext(); ) {
+            Map<String, Object> map = it.next();
+            paths.add((String) map.get(key));
+        }
+        String[] array = new String[maps.size()];
+        paths.toArray(array);
+        return array;
+    }
 }
