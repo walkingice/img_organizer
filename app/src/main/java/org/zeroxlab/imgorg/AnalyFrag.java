@@ -3,8 +3,6 @@ package org.zeroxlab.imgorg;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
-import android.content.ContentProviderOperation;
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -12,7 +10,6 @@ import android.media.MediaScannerConnection;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
