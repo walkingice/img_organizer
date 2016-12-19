@@ -14,7 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class MainFrag extends Fragment implements View.OnClickListener{
+public class MainFrag extends Fragment implements View.OnClickListener {
 
     private Context mCtx;
     private Resources mRes;
@@ -81,7 +81,7 @@ public class MainFrag extends Fragment implements View.OnClickListener{
         int max = Integer.parseInt(prefs.getString(keyMax, ImgOrg.DEF_MAX));
         boolean handleVideo = prefs.getBoolean(keyVideo, ImgOrg.DEF_HANDLE_VIDEO);
         String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
-        String to   = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
+        String to = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
 
         mFromDir.setText(from);
         mToDir.setText(to);

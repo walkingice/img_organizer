@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity
         FragmentManager fragmentManager = getSupportFragmentManager();
         Fragment fragment = null;
         if (position == 0) {
-           fragment = new MainFrag();
+            fragment = new MainFrag();
         } else {
             fragment = PlaceholderFragment.newInstance(position);
         }
