@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.media.MediaScannerConnection;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -30,6 +29,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.Subscriber;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.exceptions.Exceptions;
+import rx.functions.Func1;
+import rx.schedulers.Schedulers;
 
 public class AnalyFrag extends Fragment implements View.OnClickListener {
 
@@ -113,66 +121,65 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         mDirTo = new File(to);
     }
 
-    private void appendOperation(List<Map<String, Object>> list, Organizer.Operation op) {
-        Map<String, Object> map = new HashMap<>();
-        map.put(KEY_OPERATION, op);
-        map.put(KEY_PATH_FROM, op.getPathFrom());
-        map.put(KEY_PATH_TO, op.getPathTo());
-        list.add(map);
-    }
-
     private void createOptions() {
         final ProgressDialog dialog = new ProgressDialog(this.getActivity());
         dialog.setMessage("Parsing...");
         dialog.setCancelable(false);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
-        AsyncTask<Object, Integer, Object> task = new AsyncTask<Object, Integer, Object>() {
-            File[] medias;
 
-            @Override
-            protected Object doInBackground(Object... params) {
-                int count = 0;
-                for (final File media : medias) {
-                    Organizer.Operation op = Organizer.createOp(media, mDirTo, "");
-                    appendOperation(mPending, op);
-                    count++;
-                    publishProgress(new Integer(count));
-                }
-                return mPending;
-            }
+        Observable.just(null)
+                .subscribeOn(Schedulers.newThread())
+                .flatMap(new Func1<Object, Observable<File>>() {
+                    @Override
+                    public Observable<File> call(Object o) {
+                        try {
+                            File[] files = Organizer.findMedias(mDirFrom, mMax, mHandleVideo);
+                            dialog.setMax(files.length);
+                            return Observable.from(files);
+                        } catch (IOException e) {
+                            throw Exceptions.propagate(e);
+                        }
+                    }
+                })
+                .flatMap(new Func1<File, Observable<Map<String, Object>>>() {
+                    @Override
+                    public Observable<Map<String, Object>> call(File file) {
+                        Organizer.Operation op = Organizer.createOp(file, mDirTo, "");
+                        Map<String, Object> map = new HashMap<>();
+                        map.put(KEY_OPERATION, op);
+                        map.put(KEY_PATH_FROM, op.getPathFrom());
+                        map.put(KEY_PATH_TO, op.getPathTo());
+                        return Observable.just(map);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Map<String, Object>>() {
+                    @Override
+                    public void onCompleted() {
+                        mAdapter = new SimpleAdapter(getActivity(),
+                                mPending,
+                                android.R.layout.simple_list_item_2,
+                                new String[]{KEY_PATH_FROM, KEY_PATH_TO},
+                                new int[]{android.R.id.text1, android.R.id.text2});
+                        mResults.setAdapter(mAdapter);
+                        mAdapter.notifyDataSetChanged();
+                        dialog.cancel();
+                        Log.d(ImgOrg.TAG, "Done");
+                    }
 
-            @Override
-            protected void onPreExecute() {
-                try {
-                    medias = Organizer.findMedias(mDirFrom, mMax, mHandleVideo);
-                } catch (IOException e) {
-                    Log.e(ImgOrg.TAG, e.toString());
-                    medias = new File[0];
-                }
-                dialog.setMax(medias.length);
-            }
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        dialog.cancel();
+                    }
 
-            @Override
-            protected void onProgressUpdate(Integer... progress) {
-                dialog.setProgress(progress[0]);
-            }
-
-            @Override
-            protected void onPostExecute(Object list) {
-                mAdapter = new SimpleAdapter(getActivity(),
-                        mPending,
-                        android.R.layout.simple_list_item_2,
-                        new String[]{KEY_PATH_FROM, KEY_PATH_TO},
-                        new int[]{android.R.id.text1, android.R.id.text2});
-                mResults.setAdapter(mAdapter);
-                mAdapter.notifyDataSetChanged();
-                dialog.cancel();
-                Log.d(ImgOrg.TAG, "Done");
-            }
-        };
-
-        task.execute();
+                    @Override
+                    public void onNext(Map<String, Object> map) {
+                        mPending.add(map);
+                        dialog.setProgress(mPending.size());
+                    }
+                });
     }
 
     private void consumeOperations() {
@@ -181,60 +188,56 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         }
 
         final ProgressDialog dialog = new ProgressDialog(this.getActivity());
+        dialog.setMessage("Moving...");
+        dialog.setCancelable(true);
+        dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 
-        final AsyncTask<Object, Map<String, Object>, Object> task =
-                new AsyncTask<Object, Map<String, Object>, Object>() {
+        Subscription subscription = Observable.just(mPending.size())
+                .observeOn(Schedulers.newThread())
+                .concatMap(new Func1<Integer, Observable<Map<String, Object>>>() {
                     @Override
-                    protected Object doInBackground(Object... params) {
-                        for (Iterator<Map<String, Object>> i = mPending.iterator(); i.hasNext(); ) {
-                            Map<String, Object> map = i.next();
-                            Operation op = (Operation) map.get(KEY_OPERATION);
-                            op.consume();
-                            publishProgress(map);
-                            //XXX: just for testing
-                            try {
-                                Thread.sleep(300);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        return null;
+                    public Observable<Map<String, Object>> call(Integer size) {
+                        dialog.setMax(size);
+                        return Observable.from(mPending);
                     }
-
+                })
+                .concatMap(new Func1<Map<String, Object>, Observable<Map<String, Object>>>() {
                     @Override
-                    protected void onPreExecute() {
-                        dialog.setMax(mPending.size());
+                    public Observable<Map<String, Object>> call(Map<String, Object> map) {
+                        Operation op = (Operation) map.get(KEY_OPERATION);
+                        op.consume();
+                        return Observable.just(map)
+                                .delay(300, TimeUnit.MILLISECONDS); // just for testing
                     }
-
+                })
+                //.delay
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Map<String, Object>>() {
                     @Override
-                    protected void onProgressUpdate(Map<String, Object>... progress) {
-                        mRemoved.add(progress[0]);
-                        dialog.setProgress(mRemoved.size());
-                    }
-
-                    @Override
-                    protected void onPostExecute(Object result) {
+                    public void onCompleted() {
                         dialog.cancel();
                         onUpdateOperations();
                     }
 
                     @Override
-                    protected void onCancelled(Object result) {
-                        onUpdateOperations();
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        dialog.cancel();
                     }
 
-                };
+                    @Override
+                    public void onNext(Map<String, Object> map) {
+                        mRemoved.add(map);
+                        dialog.setProgress(mRemoved.size());
+                    }
+                });
 
-        dialog.setMessage("Moving...");
-        dialog.setCancelable(true);
-        dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
-                task.cancel(true);
+                subscription.unsubscribe();
             }
         });
         dialog.show();
-        task.execute();
     }
 
     private void onUpdateOperations() {
