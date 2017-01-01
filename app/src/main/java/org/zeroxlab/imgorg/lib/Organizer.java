@@ -11,12 +11,12 @@ import java.util.List;
 
 public final class Organizer {
 
-    private final static String[] EXTS = new String[] {
-        "gif", "png", "bmp", "jpg", "jpeg", "mp4"
+    private final static String[] EXTS = new String[]{
+            "gif", "png", "bmp", "jpg", "jpeg", "mp4"
     };
 
-    private final static String[] EXTS_NO_VID = new String[] {
-        "gif", "png", "bmp", "jpg", "jpeg"
+    private final static String[] EXTS_NO_VID = new String[]{
+            "gif", "png", "bmp", "jpg", "jpeg"
     };
 
     private final static FilenameFilter FILTER = new FilenameFilter() {
@@ -45,18 +45,14 @@ public final class Organizer {
 
     private final static void ensureExists(File file) throws IOException {
         if (!file.exists()) {
-            throw new IOException(
-                    String.format("[%s] does not exists",
-                        file.getPath()));
+            throw new IOException(String.format("[%s] does not exists", file.getPath()));
         }
     }
 
     private final static void ensureDir(File dir) throws IOException {
         ensureExists(dir);
         if (!dir.isDirectory()) {
-            throw new IOException(
-                    String.format("[%s] is not a directory",
-                        dir.getPath()));
+            throw new IOException(String.format("[%s] is not a directory", dir.getPath()));
         }
     }
 
@@ -72,13 +68,10 @@ public final class Organizer {
         return found;
     }
 
-    public final static Operation createOp (File file, File toDir, String prefix) {
+    public final static Operation createOp(File file, File toDir, String prefix) {
         Operation op = new Operation(file, toDir);
         return op;
     }
-
-    //public final static void invoke(Operation op, boolean moveFilm) {
-    //}
 
     public static class Operation {
         private final static SimpleDateFormat sSDF = new SimpleDateFormat("yyyy-MM");
@@ -97,12 +90,12 @@ public final class Organizer {
         private String mPathFrom = "";
         private String mPathTo = "";
 
-        public Operation (File fromFile, File destDir) {
-                mFrom = fromFile;
-                mPathFrom = mFrom.getAbsolutePath();
-                mContainerPath = destDir.getAbsolutePath();
-                mIsImg = true;
-                probe();
+        public Operation(File fromFile, File destDir) {
+            mFrom = fromFile;
+            mPathFrom = mFrom.getAbsolutePath();
+            mContainerPath = destDir.getAbsolutePath();
+            mIsImg = true;
+            probe();
         }
 
         // true, if this file should be moved
