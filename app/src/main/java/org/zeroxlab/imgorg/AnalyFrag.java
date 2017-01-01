@@ -6,7 +6,6 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.media.MediaScannerConnection;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -18,14 +17,13 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
+import org.zeroxlab.imgorg.lib.Media;
+import org.zeroxlab.imgorg.lib.Operation;
 import org.zeroxlab.imgorg.lib.Organizer;
-import org.zeroxlab.imgorg.lib.Organizer.Operation;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -45,16 +43,15 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
     private ListView mResults;
     private Button mOrganize;
-    private List<Map<String, Object>> mPending;
-    private List<Map<String, Object>> mRemoved;
+    private List<Operation> mPending;
+    private List<Operation> mRemoved;
     private BaseAdapter mAdapter;
 
     private int mMax = Integer.parseInt(ImgOrg.DEF_MAX);
     private boolean mHandleVideo = ImgOrg.DEF_HANDLE_VIDEO;
-    private File mDirFrom;
-    private File mDirTo;
+    private String mFromPath;
+    private String mToPath;
 
-    private final static String KEY_OPERATION = "get_organizer_operation";
     private final static String KEY_PATH_FROM = "get_path_from";
     private final static String KEY_PATH_TO = "get_path_to";
 
@@ -115,10 +112,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
         mMax = Integer.parseInt(prefs.getString(keyMax, mMax + ""));
         mHandleVideo = prefs.getBoolean(keyHandleVideo, ImgOrg.DEF_HANDLE_VIDEO);
-        String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
-        String to = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
-        mDirFrom = new File(from);
-        mDirTo = new File(to);
+        mFromPath = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
+        mToPath = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
     }
 
     private void createOptions() {
@@ -130,35 +125,38 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
         Observable.just(null)
                 .subscribeOn(Schedulers.newThread())
-                .flatMap(new Func1<Object, Observable<File>>() {
+                .flatMap(new Func1<Object, Observable<Media>>() {
                     @Override
-                    public Observable<File> call(Object o) {
+                    public Observable<Media> call(Object o) {
                         try {
-                            File[] files = Organizer.findMedias(mDirFrom, mMax, mHandleVideo);
-                            dialog.setMax(files.length);
-                            return Observable.from(files);
+                            List<Media> medias = Organizer.findMedias(getActivity(), mFromPath, mMax, mHandleVideo);
+                            dialog.setMax(medias.size());
+                            return Observable.from(medias);
                         } catch (IOException e) {
                             throw Exceptions.propagate(e);
                         }
                     }
                 })
-                .flatMap(new Func1<File, Observable<Map<String, Object>>>() {
+                .flatMap(new Func1<Media, Observable<Operation>>() {
                     @Override
-                    public Observable<Map<String, Object>> call(File file) {
-                        Organizer.Operation op = Organizer.createOp(file, mDirTo, "");
-                        Map<String, Object> map = new HashMap<>();
-                        map.put(KEY_OPERATION, op);
-                        map.put(KEY_PATH_FROM, op.getPathFrom());
-                        map.put(KEY_PATH_TO, op.getPathTo());
-                        return Observable.just(map);
+                    public Observable<Operation> call(Media media) {
+                        return Observable.just(Organizer.createOperation(media, mToPath));
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Map<String, Object>>() {
+                .subscribe(new Subscriber<Operation>() {
                     @Override
                     public void onCompleted() {
+                        List<Map<String, Object>> list = new ArrayList<>();
+                        for (Operation op : mPending) {
+                            Map<String, Object> map = new HashMap<>();
+                            map.put(KEY_PATH_FROM, op.getSource());
+                            map.put(KEY_PATH_TO, op.getDestination());
+                            list.add(map);
+                        }
+
                         mAdapter = new SimpleAdapter(getActivity(),
-                                mPending,
+                                list,
                                 android.R.layout.simple_list_item_2,
                                 new String[]{KEY_PATH_FROM, KEY_PATH_TO},
                                 new int[]{android.R.id.text1, android.R.id.text2});
@@ -175,8 +173,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                     }
 
                     @Override
-                    public void onNext(Map<String, Object> map) {
-                        mPending.add(map);
+                    public void onNext(Operation op) {
+                        mPending.add(op);
                         dialog.setProgress(mPending.size());
                     }
                 });
@@ -194,25 +192,24 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
         Subscription subscription = Observable.just(mPending.size())
                 .observeOn(Schedulers.newThread())
-                .concatMap(new Func1<Integer, Observable<Map<String, Object>>>() {
+                .concatMap(new Func1<Integer, Observable<Operation>>() {
                     @Override
-                    public Observable<Map<String, Object>> call(Integer size) {
+                    public Observable<Operation> call(Integer size) {
                         dialog.setMax(size);
                         return Observable.from(mPending);
                     }
                 })
-                .concatMap(new Func1<Map<String, Object>, Observable<Map<String, Object>>>() {
+                .concatMap(new Func1<Operation, Observable<Operation>>() {
                     @Override
-                    public Observable<Map<String, Object>> call(Map<String, Object> map) {
-                        Operation op = (Operation) map.get(KEY_OPERATION);
+                    public Observable<Operation> call(Operation op) {
                         op.consume();
-                        return Observable.just(map)
+                        return Observable.just(op)
                                 .delay(300, TimeUnit.MILLISECONDS); // just for testing
                     }
                 })
                 //.delay
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Map<String, Object>>() {
+                .subscribe(new Subscriber<Operation>() {
                     @Override
                     public void onCompleted() {
                         dialog.cancel();
@@ -226,8 +223,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                     }
 
                     @Override
-                    public void onNext(Map<String, Object> map) {
-                        mRemoved.add(map);
+                    public void onNext(Operation op) {
+                        mRemoved.add(op);
                         dialog.setProgress(mRemoved.size());
                     }
                 });
@@ -247,52 +244,29 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
 
-        String[] toScanPaths = getStringPaths(mRemoved, KEY_PATH_TO);
+        Organizer.postOperation(getActivity(), mRemoved);
 
-        // scan destination path to DB
-        MediaScannerConnection.scanFile(this.getActivity(), toScanPaths, null, null);
-
-        /* FIXME: the below code which be comment out, it breaks my sdcard storage and
-         * my system format my sdcar
-         */
-        // remove source path from DB
-        //String[] toRemovePaths = getStringPaths(mRemoved, KEY_PATH_FROM);
-        //try {
-        //    ContentResolver resolver = this.getActivity().getContentResolver();
-        //    ArrayList<ContentProviderOperation> options = new ArrayList<>(toRemovePaths.length);
-        //    for (int i = 0; i < toRemovePaths.length; i++) {
-        //        ContentProviderOperation op =
-        //                ContentProviderOperation.newDelete(
-        //                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        //                        .withSelection(MediaStore.Images.Media.DATA + "=?",
-        //                                new String[]{toRemovePaths[i]})
-        //                        .build();
-        //        options.add(op);
-        //    }
-        //    resolver.applyBatch(MediaStore.AUTHORITY, options);
-        //} catch (Exception e) {
-        //    e.printStackTrace();
-        //}
         // update ListView
-        for (Iterator<Map<String, Object>> i = mRemoved.iterator(); i.hasNext(); ) {
-            mPending.remove(i.next());
+        for (Operation op : mRemoved) {
+            mPending.remove(op);
         }
+
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (Operation op : mPending) {
+            Map<String, Object> map = new HashMap<>();
+            map.put(KEY_PATH_FROM, op.getSource());
+            map.put(KEY_PATH_TO, op.getDestination());
+            list.add(map);
+        }
+
         mRemoved.clear();
+        mAdapter = new SimpleAdapter(getActivity(),
+                list,
+                android.R.layout.simple_list_item_2,
+                new String[]{KEY_PATH_FROM, KEY_PATH_TO},
+                new int[]{android.R.id.text1, android.R.id.text2});
+        mResults.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
         dialog.cancel();
-    }
-
-    private String[] getStringPaths(List<Map<String, Object>> maps, String key) {
-        List<String> paths = new ArrayList<>(maps.size());
-        for (Iterator<Map<String, Object>> it = maps.iterator(); it.hasNext(); ) {
-            Map<String, Object> map = it.next();
-            Operation op = (Operation) map.get(KEY_OPERATION);
-            if (op.isMoved()) {
-                paths.add((String) map.get(key));
-            }
-        }
-        String[] array = new String[paths.size()];
-        paths.toArray(array);
-        return array;
     }
 }
