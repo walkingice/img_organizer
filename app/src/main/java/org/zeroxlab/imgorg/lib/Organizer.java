@@ -6,6 +6,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.List;
 
 public final class Organizer {
 
@@ -63,11 +65,9 @@ public final class Organizer {
         // FIXME: currently, always ignore mp4 video files since I do not want to get EXIF from it
         File[] found = video ? dir.listFiles(FILTER) : dir.listFiles(FILTER_NO_VID);
         if (found != null && found.length > maximum) {
-            File[] trim = new File[maximum];
-            for (int i = 0; i < maximum; i++) {
-                trim[i] = found[i];
-            }
-            found = trim;
+            List<File> trim = Arrays.asList(found).subList(0, maximum);
+            found = new File[trim.size()];
+            found = trim.toArray(found);
         }
         return found;
     }
