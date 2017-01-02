@@ -3,6 +3,7 @@ package org.zeroxlab.imgorg;
 
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -143,6 +144,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                         return Observable.just(Organizer.createOperation(media, mToPath));
                     }
                 })
+                //.take(3)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Operation>() {
                     @Override
@@ -189,6 +191,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setMessage("Moving...");
         dialog.setCancelable(true);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        final Context ctx = getActivity();
 
         Subscription subscription = Observable.just(mPending.size())
                 .observeOn(Schedulers.newThread())
@@ -202,12 +205,11 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                 .concatMap(new Func1<Operation, Observable<Operation>>() {
                     @Override
                     public Observable<Operation> call(Operation op) {
-                        op.consume();
+                        op.consume(ctx);
                         return Observable.just(op)
-                                .delay(300, TimeUnit.MILLISECONDS); // just for testing
+                                .delay(100, TimeUnit.MILLISECONDS); // just for testing
                     }
                 })
-                //.delay
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<Operation>() {
                     @Override
@@ -243,8 +245,6 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setCancelable(false);
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
-
-        Organizer.postOperation(getActivity(), mRemoved);
 
         // update ListView
         for (Operation op : mRemoved) {

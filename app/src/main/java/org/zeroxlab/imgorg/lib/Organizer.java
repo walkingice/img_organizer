@@ -2,7 +2,10 @@
 package org.zeroxlab.imgorg.lib;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.media.MediaScannerConnection;
+import android.os.Environment;
+import android.provider.MediaStore;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -62,7 +65,50 @@ public final class Organizer {
     }
 
     public final static List<Media> findMedias(Context ctx, String fromPath, int maximum, boolean video) throws IOException {
-        return findFileMedias(fromPath, maximum, video);
+        //return findFileMedias(fromPath, maximum, video);
+        return findDbMedias(ctx, maximum);
+    }
+
+    private final static List<Media> findDbMedias(Context ctx, int maximum) {
+        final String[] projection = new String[]{
+                MediaStore.Images.Media._ID,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
+                MediaStore.Images.Media.DATA,
+                MediaStore.Images.Media.DATE_TAKEN
+        };
+        final String selection = MediaStore.Images.Media.BUCKET_ID + " = ?";
+        final String CAMERA_IMAGE_BUCKET_NAME =
+                Environment.getExternalStorageDirectory().toString()
+                        + "/DCIM/Camera";
+        final String CAMERA_IMAGE_BUCKET_ID =
+                getBucketId(CAMERA_IMAGE_BUCKET_NAME);
+        final String[] selectionArgs = {CAMERA_IMAGE_BUCKET_ID};
+
+        final Cursor cursor = ctx.getContentResolver()
+                .query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null);
+        List<Media> result = new ArrayList<>(cursor.getCount());
+        if (cursor.moveToFirst()) {
+            final int dataIdx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+            final int dateIdx = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN);
+            do {
+                final String data = cursor.getString(dataIdx);
+                final Long date = cursor.getLong(dateIdx);
+                result.add(new Media(data, date));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        int max = result.size() > maximum ? maximum : result.size();
+        result = result.subList(0, max);
+        return result;
+    }
+
+    public static String getBucketId(String path) {
+        return String.valueOf(path.toLowerCase().hashCode());
     }
 
     private final static List<Media> findFileMedias(String fromPath, int maximum, boolean video) throws IOException {
@@ -85,18 +131,8 @@ public final class Organizer {
     }
 
     public final static Operation createOperation(Media media, String destPath) {
-        return new FileOperation(media, destPath);
-    }
-
-    public final static void postOperation(Context ctx, List<Operation> ops) {
-        if (!(ops.get(0) instanceof FileOperation)) {
-            return;
-        }
-
-        String[] toScanPaths = getStringPaths(ops);
-
-        // scan destination path to DB
-        MediaScannerConnection.scanFile(ctx, toScanPaths, null, null);
+        //return new FileOperation(media, destPath);
+        return new StoreOperation(media, destPath);
     }
 
     private static String[] getStringPaths(List<Operation> ops) {

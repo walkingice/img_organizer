@@ -1,6 +1,8 @@
 // vim: et sw=4 sts=4 tabstop=4
 package org.zeroxlab.imgorg.lib;
 
+import android.content.Context;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -40,7 +42,7 @@ public class FileOperation implements Operation {
     }
 
     @Override
-    public void consume() {
+    public void consume(Context ctx) {
         if (!this.isPending()) {
             return;
         }
