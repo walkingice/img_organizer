@@ -9,25 +9,22 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
 
 import org.zeroxlab.imgorg.lib.Media;
 import org.zeroxlab.imgorg.lib.Operation;
 import org.zeroxlab.imgorg.lib.Organizer;
+import org.zeroxlab.imgorg.ui.ListItemPresenter;
+import org.zeroxlab.imgorg.ui.SelectorAdapter;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import rx.Observable;
@@ -42,19 +39,14 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
     private Resources mRes;
 
-    private ListView mResults;
+    private RecyclerView mResults;
     private Button mOrganize;
-    private List<Operation> mPending;
-    private List<Operation> mRemoved;
-    private BaseAdapter mAdapter;
+    private SelectorAdapter<Operation> mAdapter;
 
     private int mMax = Integer.parseInt(ImgOrg.DEF_MAX);
     private boolean mHandleVideo = ImgOrg.DEF_HANDLE_VIDEO;
     private String mFromPath;
     private String mToPath;
-
-    private final static String KEY_PATH_FROM = "get_path_from";
-    private final static String KEY_PATH_TO = "get_path_to";
 
     @Override
     public void onCreate(Bundle state) {
@@ -70,10 +62,18 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     @Override
     public void onStart() {
         super.onStart();
-        mPending = new LinkedList<>();
-        mRemoved = new ArrayList<>();
         View root = getView();
-        mResults = (ListView) root.findViewById(R.id.analy_results);
+
+        mResults = (RecyclerView) root.findViewById(R.id.analy_results);
+        mAdapter = new SelectorAdapter<>(new SelectorAdapter.PresenterSelector() {
+            SelectorAdapter.Presenter presenter = new ListItemPresenter();
+
+            @Override
+            public SelectorAdapter.Presenter getPresenter(SelectorAdapter.Type type) {
+                return presenter;
+            }
+        });
+
         mResults.setAdapter(mAdapter);
         mOrganize = (Button) root.findViewById(R.id.btn_organize);
         mOrganize.setOnClickListener(this);
@@ -149,20 +149,6 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                 .subscribe(new Subscriber<Operation>() {
                     @Override
                     public void onCompleted() {
-                        List<Map<String, Object>> list = new ArrayList<>();
-                        for (Operation op : mPending) {
-                            Map<String, Object> map = new HashMap<>();
-                            map.put(KEY_PATH_FROM, op.getSource());
-                            map.put(KEY_PATH_TO, op.getDestination());
-                            list.add(map);
-                        }
-
-                        mAdapter = new SimpleAdapter(getActivity(),
-                                list,
-                                android.R.layout.simple_list_item_2,
-                                new String[]{KEY_PATH_FROM, KEY_PATH_TO},
-                                new int[]{android.R.id.text1, android.R.id.text2});
-                        mResults.setAdapter(mAdapter);
                         mAdapter.notifyDataSetChanged();
                         dialog.cancel();
                         Log.d(ImgOrg.TAG, "Done");
@@ -176,14 +162,14 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
                     @Override
                     public void onNext(Operation op) {
-                        mPending.add(op);
-                        dialog.setProgress(mPending.size());
+                        mAdapter.addItem(op, SelectorAdapter.Type.A);
+                        dialog.setProgress(mAdapter.getItemCount());
                     }
                 });
     }
 
     private void consumeOperations() {
-        if (mPending.size() == 0) {
+        if (mAdapter.getItemCount() == 0) {
             return;
         }
 
@@ -193,13 +179,19 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         final Context ctx = getActivity();
 
-        Subscription subscription = Observable.just(mPending.size())
+        final int total = mAdapter.getItemCount();
+
+        Subscription subscription = Observable.just(total)
                 .observeOn(Schedulers.newThread())
                 .concatMap(new Func1<Integer, Observable<Operation>>() {
                     @Override
                     public Observable<Operation> call(Integer size) {
                         dialog.setMax(size);
-                        return Observable.from(mPending);
+                        List<Operation> list = new ArrayList<>();
+                        for (int i = 0; i < size; i++) {
+                            list.add(mAdapter.getItem(i));
+                        }
+                        return Observable.from(list);
                     }
                 })
                 .concatMap(new Func1<Operation, Observable<Operation>>() {
@@ -214,8 +206,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                 .subscribe(new Subscriber<Operation>() {
                     @Override
                     public void onCompleted() {
+                        mAdapter.notifyDataSetChanged();
                         dialog.cancel();
-                        onUpdateOperations();
                     }
 
                     @Override
@@ -226,47 +218,17 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
 
                     @Override
                     public void onNext(Operation op) {
-                        mRemoved.add(op);
-                        dialog.setProgress(mRemoved.size());
+                        mAdapter.remove(op);
+                        dialog.setProgress(total - mAdapter.getItemCount());
                     }
                 });
 
         dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
             public void onCancel(DialogInterface dialog) {
                 subscription.unsubscribe();
+                mAdapter.notifyDataSetChanged();
             }
         });
         dialog.show();
-    }
-
-    private void onUpdateOperations() {
-        final ProgressDialog dialog = new ProgressDialog(this.getActivity());
-        dialog.setMessage("Updating...");
-        dialog.setCancelable(false);
-        dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        dialog.show();
-
-        // update ListView
-        for (Operation op : mRemoved) {
-            mPending.remove(op);
-        }
-
-        List<Map<String, Object>> list = new ArrayList<>();
-        for (Operation op : mPending) {
-            Map<String, Object> map = new HashMap<>();
-            map.put(KEY_PATH_FROM, op.getSource());
-            map.put(KEY_PATH_TO, op.getDestination());
-            list.add(map);
-        }
-
-        mRemoved.clear();
-        mAdapter = new SimpleAdapter(getActivity(),
-                list,
-                android.R.layout.simple_list_item_2,
-                new String[]{KEY_PATH_FROM, KEY_PATH_TO},
-                new int[]{android.R.id.text1, android.R.id.text2});
-        mResults.setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
-        dialog.cancel();
     }
 }

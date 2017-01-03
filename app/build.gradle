@@ -28,6 +28,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:appcompat-v7:23.0.0'
+    compile "com.android.support:recyclerview-v7:23.0.0"
     compile 'net.rdrei.android.dirchooser:library:3.0@aar'
     compile 'com.gu:option:1.3'
 

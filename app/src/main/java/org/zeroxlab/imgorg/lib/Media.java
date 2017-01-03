@@ -7,7 +7,7 @@ public class Media {
     final public String data;
     final public Date date;
 
-    Media(String data) {
+    public Media(String data) {
         this(data, -1);
     }
 
