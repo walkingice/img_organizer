@@ -9,6 +9,8 @@ import android.widget.TextView;
 import org.zeroxlab.imgorg.R;
 import org.zeroxlab.imgorg.lib.Operation;
 
+import java.io.File;
+
 public class ListItemPresenter implements SelectorAdapter.Presenter<Operation> {
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent) {
@@ -20,7 +22,9 @@ public class ListItemPresenter implements SelectorAdapter.Presenter<Operation> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, Operation item) {
         InnerViewHolder holder = (InnerViewHolder) viewHolder;
-        holder.iText1.setText(item.getSource());
+        File src = new File(item.getSource());
+        File dst = new File(item.getDestination());
+        holder.iText1.setText(src.getName());
         holder.iText2.setText(item.getDestination());
     }
 
