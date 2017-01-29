@@ -3,7 +3,6 @@ package org.zeroxlab.imgorg.lib;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.provider.MediaStore;
 
@@ -64,9 +63,27 @@ public final class Organizer {
         }
     }
 
-    public final static List<Media> findMedias(Context ctx, String fromPath, int maximum, boolean video) throws IOException {
+    public final static List<Media> findMedias(Context ctx,
+                                               String fromPath,
+                                               int maximum,
+                                               boolean video,
+                                               boolean mockOption) throws IOException {
         //return findFileMedias(fromPath, maximum, video);
-        return findDbMedias(ctx, maximum);
+        if (mockOption) {
+            return createMockMedias(ctx, maximum);
+        } else {
+            return findDbMedias(ctx, maximum);
+        }
+    }
+
+    private final static List<Media> createMockMedias(Context ctx, int maximum) {
+        List<Media> list = new ArrayList<>();
+        for (int i = 0; i < maximum; i++) {
+            String filename = String.format("/sdcard/DCIM/Camera/%d.jpg", i);
+            // start from 2017/01/25
+            list.add(new Media(filename, 1485385400000l + i * 10000000));
+        }
+        return list;
     }
 
     private final static List<Media> findDbMedias(Context ctx, int maximum) {
@@ -130,9 +147,13 @@ public final class Organizer {
         return medias;
     }
 
-    public final static Operation createOperation(Media media, String destPath) {
+    public final static Operation createOperation(Media media, String destPath, boolean mockOption) {
         //return new FileOperation(media, destPath);
-        return new StoreOperation(media, destPath);
+        if (mockOption) {
+            return new MockOperation(media, destPath);
+        } else {
+            return new StoreOperation(media, destPath);
+        }
     }
 
     private static String[] getStringPaths(List<Operation> ops) {

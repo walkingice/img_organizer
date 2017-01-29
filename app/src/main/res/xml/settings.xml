@@ -27,4 +27,14 @@
             android:title="Handle video files"
             />
     </PreferenceCategory>
+    <PreferenceCategory
+        android:title="Developer options"
+        >
+        <CheckBoxPreference
+            android:checked="false"
+            android:key="@string/key_use_mock_operation"
+            android:summary="to develop UI, don't touch real data"
+            android:title="Use mock option data structure"
+            />
+    </PreferenceCategory>
 </PreferenceScreen>

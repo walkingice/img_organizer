@@ -44,6 +44,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private SelectorAdapter<Operation> mAdapter;
 
     private int mMax = Integer.parseInt(ImgOrg.DEF_MAX);
+    private boolean mMockOption = false;
     private boolean mHandleVideo = ImgOrg.DEF_HANDLE_VIDEO;
     private String mFromPath;
     private String mToPath;
@@ -110,8 +111,10 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         String keyHandleVideo = mRes.getString(R.string.key_handle_video);
         String keyFrom = mRes.getString(R.string.key_from_dir);
         String keyTo = mRes.getString(R.string.key_to_dir);
+        String keyMockOption = mRes.getString(R.string.key_use_mock_operation);
 
         mMax = Integer.parseInt(prefs.getString(keyMax, mMax + ""));
+        mMockOption = prefs.getBoolean(keyMockOption, false);
         mHandleVideo = prefs.getBoolean(keyHandleVideo, ImgOrg.DEF_HANDLE_VIDEO);
         mFromPath = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
         mToPath = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
@@ -130,7 +133,11 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                     @Override
                     public Observable<Media> call(Object o) {
                         try {
-                            List<Media> medias = Organizer.findMedias(getActivity(), mFromPath, mMax, mHandleVideo);
+                            List<Media> medias = Organizer.findMedias(getActivity(),
+                                    mFromPath,
+                                    mMax,
+                                    mHandleVideo,
+                                    mMockOption);
                             dialog.setMax(medias.size());
                             return Observable.from(medias);
                         } catch (IOException e) {
@@ -141,7 +148,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
                 .flatMap(new Func1<Media, Observable<Operation>>() {
                     @Override
                     public Observable<Operation> call(Media media) {
-                        return Observable.just(Organizer.createOperation(media, mToPath));
+                        return Observable.just(Organizer.createOperation(media, mToPath, mMockOption));
                     }
                 })
                 //.take(3)

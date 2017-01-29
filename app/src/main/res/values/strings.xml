@@ -17,5 +17,6 @@
     <string name="key_from_dir">pref_key_from_dir</string>
     <string name="key_to_dir">pref_key_to_dir</string>
     <string name="key_handle_video">pref_key_handle_video</string>
+    <string name="key_use_mock_operation">pref_key_use_mock_operation</string>
 </resources>
 

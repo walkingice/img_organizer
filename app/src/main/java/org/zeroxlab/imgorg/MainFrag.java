@@ -78,8 +78,10 @@ public class MainFrag extends Fragment implements View.OnClickListener {
         String keyVideo = mRes.getString(R.string.key_handle_video);
         String keyFrom = mRes.getString(R.string.key_from_dir);
         String keyTo = mRes.getString(R.string.key_to_dir);
+        String keyMockOption = mRes.getString(R.string.key_use_mock_operation);
         int max = Integer.parseInt(prefs.getString(keyMax, ImgOrg.DEF_MAX));
         boolean handleVideo = prefs.getBoolean(keyVideo, ImgOrg.DEF_HANDLE_VIDEO);
+        boolean mockOption = prefs.getBoolean(keyMockOption, false);
         String from = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
         String to = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
 
@@ -91,6 +93,7 @@ public class MainFrag extends Fragment implements View.OnClickListener {
         editor.putString(keyMax, "" + max);
         editor.putString(keyFrom, from);
         editor.putString(keyTo, to);
+        editor.putBoolean(keyMockOption, mockOption);
         editor.commit();
     }
 }
