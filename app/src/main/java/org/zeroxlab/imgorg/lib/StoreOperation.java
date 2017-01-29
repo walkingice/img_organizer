@@ -24,8 +24,8 @@ public class StoreOperation implements Operation {
         mDate = source.date;
         Date d = mDate == null ? new Date() : mDate;
         String dstDate = sSDF.format(d);
-        // FIXME
-        mDestination = mSource.replace("Camera", "Organized/" + dstDate);
+        File dst = new File(dest + "/" + dstDate);
+        mDestination = dst.getAbsolutePath();
     }
 
     @Override
