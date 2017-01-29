@@ -20,7 +20,9 @@
             android:summary="Maximum number of files to deal with"
             android:title="Maximum number of files to deal with"
             />
+        <!-- right now we don't support video -->
         <CheckBoxPreference
+            android:checked="false"
             android:enabled="false"
             android:key="@string/key_handle_video"
             android:summary="Whether to handle mp4 files"
