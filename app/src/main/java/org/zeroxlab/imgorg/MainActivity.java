@@ -65,6 +65,10 @@ public class MainActivity extends AppCompatActivity
         Fragment fragment = null;
         if (position == 0) {
             fragment = new MainFrag();
+            Bundle b = new Bundle();
+            // FIXME: we should get rid of place-holder-fragment
+            b.putInt(PlaceholderFragment.ARG_SECTION_NUMBER, 0);
+            fragment.setArguments(b);
         } else {
             fragment = PlaceholderFragment.newInstance(position);
         }
