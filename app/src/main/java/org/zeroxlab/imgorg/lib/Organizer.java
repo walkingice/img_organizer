@@ -72,7 +72,7 @@ public final class Organizer {
         if (mockOption) {
             return createMockMedias(ctx, maximum);
         } else {
-            return findDbMedias(ctx, maximum);
+            return findDbMedias(ctx, fromPath, maximum);
         }
     }
 
@@ -86,7 +86,7 @@ public final class Organizer {
         return list;
     }
 
-    private final static List<Media> findDbMedias(Context ctx, int maximum) {
+    private final static List<Media> findDbMedias(Context ctx, String fromPath, int maximum) {
         final String[] projection = new String[]{
                 MediaStore.Images.Media._ID,
                 MediaStore.Images.Media.BUCKET_DISPLAY_NAME,
@@ -94,9 +94,7 @@ public final class Organizer {
                 MediaStore.Images.Media.DATE_TAKEN
         };
         final String selection = MediaStore.Images.Media.BUCKET_ID + " = ?";
-        final String CAMERA_IMAGE_BUCKET_NAME =
-                Environment.getExternalStorageDirectory().toString()
-                        + "/DCIM/Camera";
+        final String CAMERA_IMAGE_BUCKET_NAME = fromPath;
         final String CAMERA_IMAGE_BUCKET_ID =
                 getBucketId(CAMERA_IMAGE_BUCKET_NAME);
         final String[] selectionArgs = {CAMERA_IMAGE_BUCKET_ID};

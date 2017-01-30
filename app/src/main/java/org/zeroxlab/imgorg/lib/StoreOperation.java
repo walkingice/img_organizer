@@ -24,18 +24,19 @@ public class StoreOperation implements Operation {
         mDate = source.date;
         Date d = mDate == null ? new Date() : mDate;
         String dstDate = sSDF.format(d);
-        File dst = new File(dest + "/" + dstDate);
+        File src = new File(mSource);
+        File dst = new File(dest + "/" + dstDate + "/" + src.getName());
         mDestination = dst.getAbsolutePath();
     }
 
     @Override
     public void consume(Context ctx) {
         ContentValues values = new ContentValues();
-        values.put(MediaStore.MediaColumns.DATA, mDestination);
+        values.put(MediaStore.Images.Media.DATA, mDestination);
         int rows = ctx.getContentResolver().update(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                 values,
-                MediaStore.MediaColumns.DATA + "='" + mSource + "'",
+                MediaStore.Images.Media.DATA + "='" + mSource + "'",
                 null
         );
         if (rows == 1) {
