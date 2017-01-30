@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 
 import org.zeroxlab.imgorg.lib.Media;
 import org.zeroxlab.imgorg.lib.Operation;
@@ -40,6 +41,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
     private Resources mRes;
 
     private RecyclerView mResults;
+    private TextView mFromDir;
     private Button mOrganize;
     private SelectorAdapter<Operation> mAdapter;
 
@@ -66,6 +68,7 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         View root = getView();
 
         mResults = (RecyclerView) root.findViewById(R.id.analy_results);
+        mFromDir = (TextView) root.findViewById(R.id.analy_from_directory);
         mAdapter = new SelectorAdapter<>(new SelectorAdapter.PresenterSelector() {
             SelectorAdapter.Presenter presenter = new ListItemPresenter();
 
@@ -118,6 +121,8 @@ public class AnalyFrag extends Fragment implements View.OnClickListener {
         mHandleVideo = prefs.getBoolean(keyHandleVideo, ImgOrg.DEF_HANDLE_VIDEO);
         mFromPath = prefs.getString(keyFrom, ImgOrg.DEF_FROM.getPath());
         mToPath = prefs.getString(keyTo, ImgOrg.DEF_TO.getPath());
+
+        mFromDir.setText(mFromPath);
     }
 
     private void createOptions() {
