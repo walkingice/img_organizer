@@ -1,12 +1,15 @@
 // vim: et sw=4 sts=4 tabstop=4
 package org.zeroxlab.imgorg;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -24,6 +27,8 @@ public class MainFrag extends Fragment implements View.OnClickListener {
 
     private View mBtnAnaly;
 
+    private static final int REQ_CODE_WRITE_EXTERNAL = 0x42;
+
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -35,16 +40,6 @@ public class MainFrag extends Fragment implements View.OnClickListener {
     @Override
     public void onDestroy() {
         super.onDestroy();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        View root = getView();
-        mFromDir = (TextView) root.findViewById(R.id.main_from_path);
-        mToDir = (TextView) root.findViewById(R.id.main_to_path);
-        mBtnAnaly = root.findViewById(R.id.main_btn_analy);
-        mBtnAnaly.setOnClickListener(this);
     }
 
     @Override
@@ -70,6 +65,33 @@ public class MainFrag extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_main, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View v, Bundle state) {
+        super.onViewCreated(v, state);
+        View root = getView();
+        mFromDir = (TextView) root.findViewById(R.id.main_from_path);
+        mToDir = (TextView) root.findViewById(R.id.main_to_path);
+        mBtnAnaly = root.findViewById(R.id.main_btn_analy);
+        mBtnAnaly.setOnClickListener(this);
+
+        int writePermission = ActivityCompat.checkSelfPermission(getContext(),
+                Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if (writePermission == PackageManager.PERMISSION_GRANTED) {
+            mBtnAnaly.setEnabled(true);
+        } else {
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    REQ_CODE_WRITE_EXTERNAL);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int reqCode, String[] permissions, int[] response) {
+        if (reqCode == REQ_CODE_WRITE_EXTERNAL
+                && response[0] == PackageManager.PERMISSION_GRANTED) {
+            mBtnAnaly.setEnabled(true);
+        }
     }
 
     private void initPreferences() {
