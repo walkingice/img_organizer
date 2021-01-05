@@ -27,6 +27,7 @@ import argparse
 import os.path
 import sys
 import re
+from PIL import Image, ExifTags
 
 
 class FileItem:
@@ -74,15 +75,48 @@ def parse_item_by_filename(file):
     return FileItem(filename=file, dest_dir=match_time.group(1) + "-" + match_time.group(2))
 
 
+re_exif_time = r'.*(\d\d\d\d):(\d\d):(\d\d).*'  # 2021:01:01 16:36:21
+
+
+def parse_item_by_exif(input_dir, file):
+    filepath = os.path.join(input_dir, file)
+    time_str = get_exif_time(filepath)
+    if time_str is not None:
+        match_time = re.match(re_exif_time, time_str)
+        if not match_time:
+            return
+        return FileItem(filename=file, dest_dir=match_time.group(1) + "-" + match_time.group(2))
+
+
+def get_exif_time(filepath):
+    img = Image.open(filepath)
+    exif = img.getexif()
+    if exif is not None:
+        exif_dict = dict(exif)
+        if 0x0132 in exif_dict:
+            return exif_dict[0x0132]
+        elif 0x9003 in exif_dict:
+            return exif_dict[0x9003]
+        elif 0x9004 in exif_dict:
+            return exif_dict[0x900]
+    return None
+
+
 def parse_items(input_dir):
     parsed_items = []
-    re_ext = r'.*[png|gif|jpg|jpeg|mp4]$'
+    re_ext = re.compile(r'.*(png|gif|jpg|jpeg)$', flags=re.IGNORECASE)
     for file in os.listdir(input_dir):
         if file.startswith("."):
             continue
         match_ext = re.match(re_ext, file)
         if not match_ext:
             continue
+
+        exif_item = parse_item_by_exif(input_dir, file)
+        if exif_item:
+            parsed_items.append(exif_item)
+            continue
+
         item = parse_item_by_filename(file)
         if not item:
             continue
