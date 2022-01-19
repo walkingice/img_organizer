@@ -29,7 +29,7 @@ dependencies {
     implementation 'com.android.support:appcompat-v7:23.0.0'
     implementation "com.android.support:recyclerview-v7:23.0.0"
     implementation 'net.rdrei.android.dirchooser:library:3.0@aar'
-    implementation 'com.gu:option:1.3'
+    implementation 'com.github.guardian:Option:e933c3a31d'
 
     implementation 'io.reactivex:rxandroid:1.2.1'
     implementation 'io.reactivex:rxjava:1.1.6'
