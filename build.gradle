@@ -3,9 +3,10 @@
 buildscript {
     repositories {
         jcenter()
+        google()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.2'
+        classpath 'com.android.tools.build:gradle:4.0.0'
         classpath 'me.tatarka:gradle-retrolambda:3.2.0'
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -16,7 +17,7 @@ buildscript {
 allprojects {
     repositories {
         jcenter()
-        mavenCentral()
+        google()
         maven { url 'http://guardian.github.com/maven/repo-releases' }
     }
 }
