@@ -1,13 +1,12 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:layout_marginBottom="@dimen/activity_vertical_margin"
-              android:layout_marginLeft="@dimen/activity_horizontal_margin"
-              android:layout_marginRight="@dimen/activity_horizontal_margin"
-              android:layout_marginTop="@dimen/activity_vertical_margin"
-              android:orientation="vertical"
-    >
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginLeft="@dimen/activity_horizontal_margin"
+    android:layout_marginTop="@dimen/activity_vertical_margin"
+    android:layout_marginRight="@dimen/activity_horizontal_margin"
+    android:layout_marginBottom="@dimen/activity_vertical_margin"
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Move image from directory"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView
             android:id="@+id/main_from_path"
@@ -29,7 +28,7 @@
             android:layout_marginTop="5dp"
             android:text=""
             android:textAppearance="?android:attr/textAppearanceSmall"
-            tools:text="/foo/bar/"/>
+            tools:text="/foo/bar/" />
 
         <TextView
             android:id="@+id/main_to_title"
@@ -37,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="46dp"
             android:text="Move image to directory"
-            android:textAppearance="?android:attr/textAppearanceMedium"/>
+            android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView
             android:id="@+id/main_to_path"
@@ -45,7 +44,7 @@
             android:layout_height="wrap_content"
             android:text=""
             android:textAppearance="?android:attr/textAppearanceSmall"
-            tools:text="/foo/bar/"/>
+            tools:text="/foo/bar/" />
     </LinearLayout>
 
     <LinearLayout
@@ -58,11 +57,11 @@
         android:weightSum="1">
 
         <Button
-            android:id="@+id/main_btn_analy"
+            android:id="@+id/main_btn_analysis"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:enabled="false"
-            android:text="Analytics"/>
+            android:text="Analytics" />
     </LinearLayout>
 
 </LinearLayout>

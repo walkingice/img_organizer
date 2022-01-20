@@ -1,4 +1,4 @@
-package org.zeroxlab.imgorg;
+package cc.jchu.imgorg;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
